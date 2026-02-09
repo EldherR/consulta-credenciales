@@ -9,6 +9,10 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -27,14 +31,6 @@
         
         .bg-gradient-to-br {
             background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
-        }
-        
-        .from-blue-50 {
-            --tw-gradient-from: #eff6ff;
-        }
-        
-        .to-indigo-100 {
-            --tw-gradient-to: #e0e7ff;
         }
         
         .p-6 {
@@ -251,6 +247,26 @@
         
         .bg-blue-50 {
             background-color: rgb(239, 246, 255);
+        }
+        
+        .bg-yellow-50 {
+            background-color: rgb(254, 252, 232);
+        }
+        
+        .bg-yellow-100 {
+            background-color: rgb(254, 249, 195);
+        }
+        
+        .text-yellow-700 {
+            color: rgb(161, 98, 7);
+        }
+        
+        .text-yellow-800 {
+            color: rgb(133, 77, 14);
+        }
+        
+        .border-yellow-200 {
+            border-color: rgb(254, 240, 138);
         }
         
         .bg-black {
@@ -531,6 +547,34 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        // CONFIGURA TU FIREBASE AQUÍ
+      const firebaseConfig = {
+
+  apiKey: "AIzaSyB4j5mwlquWXPgwaLOMYb3Ni9Y3a-ev5Lw",
+
+  authDomain: "consulta-credenciales.firebaseapp.com",
+
+  projectId: "consulta-credenciales",
+
+  storageBucket: "consulta-credenciales.firebasestorage.app",
+
+  messagingSenderId: "464236026212",
+
+  appId: "1:464236026212:web:a65329b6aed87840f8c271"
+
+};
+
+        // Inicializar Firebase
+        let db;
+        try {
+          if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+          }
+          db = firebase.firestore();
+        } catch (error) {
+          console.error("Error inicializando Firebase:", error);
+        }
+
         function ConsultaCredenciales() {
           const [datos, setDatos] = useState([]);
           const [busqueda, setBusqueda] = useState('');
@@ -540,20 +584,25 @@
           const [modalAbierto, setModalAbierto] = useState(false);
           const [passwordInput, setPasswordInput] = useState('');
           const [errorPassword, setErrorPassword] = useState('');
+          const [firebaseConfigured, setFirebaseConfigured] = useState(false);
 
-          // Cargar datos guardados al iniciar
           useEffect(() => {
-            cargarDatosGuardados();
+            // Verificar si Firebase está configurado
+            if (firebaseConfig.apiKey !== "TU_API_KEY_AQUI") {
+              setFirebaseConfigured(true);
+              cargarDatosGuardados();
+            } else {
+              setCargando(false);
+            }
           }, []);
 
           const cargarDatosGuardados = async () => {
             try {
-              const datosGuardados = localStorage.getItem('credenciales-db');
-              if (datosGuardados) {
-                setDatos(JSON.parse(datosGuardados));
-              }
+              const snapshot = await db.collection('credenciales').get();
+              const datosFirebase = snapshot.docs.map(doc => doc.data());
+              setDatos(datosFirebase);
             } catch (error) {
-              console.log('No hay datos guardados previamente');
+              console.log('Error cargando datos:', error);
             } finally {
               setCargando(false);
             }
@@ -571,16 +620,25 @@
                 const primerHoja = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonData = XLSX.utils.sheet_to_json(primerHoja);
 
-                // Normalizar los datos
                 const datosNormalizados = jsonData.map(fila => ({
                   nombre: fila.nombre || fila.Nombre || fila.NOMBRE || fila.name || fila.Name || '',
                   usuario: fila.usuario || fila.Usuario || fila.USUARIO || fila.user || fila.User || '',
                   contraseña: fila.contraseña || fila.Contraseña || fila.CONTRASEÑA || fila.password || fila.Password || fila.PASSWORD || fila.clave || fila.Clave || ''
                 }));
 
+                // Limpiar colección anterior
+                const batch = db.batch();
+                const snapshot = await db.collection('credenciales').get();
+                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+
+                // Guardar nuevos datos
+                const promises = datosNormalizados.map((item, index) => 
+                  db.collection('credenciales').doc(`cred_${index}`).set(item)
+                );
+                await Promise.all(promises);
+
                 setDatos(datosNormalizados);
-                localStorage.setItem('credenciales-db', JSON.stringify(datosNormalizados));
-                
                 alert(`✅ Archivo cargado exitosamente. ${datosNormalizados.length} registros importados.`);
               } catch (error) {
                 alert('❌ Error al procesar el archivo: ' + error.message);
@@ -598,15 +656,10 @@
             const encontrados = datos.filter(item => {
               const nombreMatch = item.nombre && item.nombre.toLowerCase().includes(busqueda.toLowerCase());
               const usuarioMatch = item.usuario && item.usuario.toLowerCase().includes(busqueda.toLowerCase());
-              
               return nombreMatch || usuarioMatch;
             });
 
-            if (encontrados.length > 0) {
-              setResultado(encontrados);
-            } else {
-              setResultado([]);
-            }
+            setResultado(encontrados.length > 0 ? encontrados : []);
           };
 
           useEffect(() => {
@@ -618,7 +671,11 @@
           const limpiarDatos = async () => {
             if (confirm('¿Estás seguro de que deseas eliminar todos los datos?')) {
               try {
-                localStorage.removeItem('credenciales-db');
+                const batch = db.batch();
+                const snapshot = await db.collection('credenciales').get();
+                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+
                 setDatos([]);
                 setResultado(null);
                 setBusqueda('');
@@ -657,6 +714,39 @@
             );
           }
 
+          if (!firebaseConfigured) {
+            return (
+              <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+                <div className="max-w-4xl mx-auto">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                    <h2 className="text-2xl font-bold text-yellow-800 mb-4">⚠️ Firebase no configurado</h2>
+                    <p className="text-yellow-700 mb-4">
+                      Para que los datos persistan en la nube, necesitas configurar Firebase. Sigue estos pasos:
+                    </p>
+                    <ol className="list-decimal list-inside space-y-2 text-yellow-700 text-sm mb-4">
+                      <li>Ve a <a href="https://console.firebase.google.com" target="_blank" className="text-blue-600 underline">Firebase Console</a></li>
+                      <li>Crea un nuevo proyecto (o usa uno existente)</li>
+                      <li>En el proyecto, ve a "Firestore Database" y créalo en modo prueba</li>
+                      <li>Ve a Configuración del proyecto → Tus apps → Agregar app web</li>
+                      <li>Copia la configuración (firebaseConfig)</li>
+                      <li>Reemplaza los valores en el código de este HTML (línea 436-442)</li>
+                    </ol>
+                    <div className="bg-white p-4 rounded border border-yellow-300 font-mono text-xs">
+                      <pre>{`const firebaseConfig = {
+  apiKey: "TU_API_KEY_AQUI",
+  authDomain: "TU_PROJECT_ID.firebaseapp.com",
+  projectId: "TU_PROJECT_ID",
+  storageBucket: "TU_PROJECT_ID.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID"
+};`}</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
               <div className="max-w-4xl mx-auto">
@@ -665,7 +755,7 @@
                     🔍 Sistema de Consulta de Credenciales
                   </h1>
                   <p className="text-gray-600">
-                    Sube tu archivo Excel y consulta credenciales por nombre
+                    Sube tu archivo Excel y consulta credenciales por nombre (Almacenamiento en la nube ☁️)
                   </p>
                 </div>
 
@@ -727,7 +817,7 @@
                       {datos.length > 0 && (
                         <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
                           <span className="text-green-700 font-medium">
-                            ✅ Base de datos cargada: {datos.length} registros
+                            ✅ Base de datos cargada: {datos.length} registros (En la nube ☁️)
                           </span>
                           <button
                             onClick={limpiarDatos}
@@ -813,7 +903,7 @@
                   </div>
                 )}
 
-                {datos.length === 0 && (
+                {datos.length === 0 && firebaseConfigured && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                     <h3 className="font-semibold text-blue-800 mb-2">ℹ️ Instrucciones</h3>
                     <ol className="list-decimal list-inside space-y-1 text-blue-700 text-sm">
@@ -821,7 +911,7 @@
                       <li>Prepara tu archivo Excel con 3 columnas: <strong>nombre</strong>, <strong>usuario</strong>, <strong>contraseña</strong></li>
                       <li>Click en el área de carga para seleccionar tu archivo</li>
                       <li>Una vez cargado, usa el buscador para consultar por nombre</li>
-                      <li>Los datos se guardan automáticamente y persisten entre sesiones</li>
+                      <li>Los datos se guardan en Firebase y están disponibles desde cualquier navegador ☁️</li>
                     </ol>
                   </div>
                 )}
