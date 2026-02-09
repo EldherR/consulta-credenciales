@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Consulta de Credenciales</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.5;
+        }
+        
+        .min-h-screen {
+            min-height: 100vh;
+        }
+        
+        .bg-gradient-to-br {
+            background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+        }
+        
+        .from-blue-50 {
+            --tw-gradient-from: #eff6ff;
+        }
+        
+        .to-indigo-100 {
+            --tw-gradient-to: #e0e7ff;
+        }
+        
+        .p-6 {
+            padding: 1.5rem;
+        }
+        
+        .max-w-4xl {
+            max-width: 56rem;
+        }
+        
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .bg-white {
+            background-color: white;
+        }
+        
+        .rounded-lg {
+            border-radius: 0.5rem;
+        }
+        
+        .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .shadow-md {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .shadow-2xl {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .mb-2 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+        
+        .mb-6 {
+            margin-bottom: 1.5rem;
+        }
+        
+        .mt-1 {
+            margin-top: 0.25rem;
+        }
+        
+        .mt-2 {
+            margin-top: 0.5rem;
+        }
+        
+        .text-3xl {
+            font-size: 1.875rem;
+            line-height: 2.25rem;
+        }
+        
+        .text-2xl {
+            font-size: 1.5rem;
+            line-height: 2rem;
+        }
+        
+        .text-xl {
+            font-size: 1.25rem;
+            line-height: 1.75rem;
+        }
+        
+        .text-lg {
+            font-size: 1.125rem;
+            line-height: 1.75rem;
+        }
+        
+        .text-base {
+            font-size: 1rem;
+            line-height: 1.5rem;
+        }
+        
+        .text-sm {
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+        }
+        
+        .text-xs {
+            font-size: 0.75rem;
+            line-height: 1rem;
+        }
+        
+        .font-bold {
+            font-weight: 700;
+        }
+        
+        .font-semibold {
+            font-weight: 600;
+        }
+        
+        .font-medium {
+            font-weight: 500;
+        }
+        
+        .font-mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        
+        .text-gray-800 {
+            color: rgb(31, 41, 55);
+        }
+        
+        .text-gray-700 {
+            color: rgb(55, 65, 81);
+        }
+        
+        .text-gray-600 {
+            color: rgb(75, 85, 99);
+        }
+        
+        .text-gray-500 {
+            color: rgb(107, 114, 128);
+        }
+        
+        .text-gray-400 {
+            color: rgb(156, 163, 175);
+        }
+        
+        .text-indigo-600 {
+            color: rgb(79, 70, 229);
+        }
+        
+        .text-green-600 {
+            color: rgb(22, 163, 74);
+        }
+        
+        .text-green-700 {
+            color: rgb(21, 128, 61);
+        }
+        
+        .text-red-600 {
+            color: rgb(220, 38, 38);
+        }
+        
+        .text-red-700 {
+            color: rgb(185, 28, 28);
+        }
+        
+        .text-blue-700 {
+            color: rgb(29, 78, 216);
+        }
+        
+        .text-blue-800 {
+            color: rgb(30, 64, 175);
+        }
+        
+        .text-white {
+            color: white;
+        }
+        
+        .bg-indigo-50 {
+            background-color: rgb(238, 242, 255);
+        }
+        
+        .bg-indigo-100 {
+            background-color: rgb(224, 231, 255);
+        }
+        
+        .bg-indigo-600 {
+            background-color: rgb(79, 70, 229);
+        }
+        
+        .bg-gray-50 {
+            background-color: rgb(249, 250, 251);
+        }
+        
+        .bg-gray-200 {
+            background-color: rgb(229, 231, 235);
+        }
+        
+        .bg-gray-300 {
+            background-color: rgb(209, 213, 219);
+        }
+        
+        .bg-gray-400 {
+            background-color: rgb(156, 163, 175);
+        }
+        
+        .bg-gray-500 {
+            background-color: rgb(107, 114, 128);
+        }
+        
+        .bg-gray-600 {
+            background-color: rgb(75, 85, 99);
+        }
+        
+        .bg-green-50 {
+            background-color: rgb(240, 253, 244);
+        }
+        
+        .bg-green-100 {
+            background-color: rgb(220, 252, 231);
+        }
+        
+        .bg-red-50 {
+            background-color: rgb(254, 242, 242);
+        }
+        
+        .bg-red-500 {
+            background-color: rgb(239, 68, 68);
+        }
+        
+        .bg-red-600 {
+            background-color: rgb(220, 38, 38);
+        }
+        
+        .bg-blue-50 {
+            background-color: rgb(239, 246, 255);
+        }
+        
+        .bg-black {
+            background-color: black;
+        }
+        
+        .bg-opacity-50 {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .flex {
+            display: flex;
+        }
+        
+        .flex-col {
+            flex-direction: column;
+        }
+        
+        .flex-1 {
+            flex: 1 1 0%;
+        }
+        
+        .items-center {
+            align-items: center;
+        }
+        
+        .justify-center {
+            justify-content: center;
+        }
+        
+        .justify-between {
+            justify-content: space-between;
+        }
+        
+        .gap-2 {
+            gap: 0.5rem;
+        }
+        
+        .gap-3 {
+            gap: 0.75rem;
+        }
+        
+        .gap-4 {
+            gap: 1rem;
+        }
+        
+        .space-y-1 > * + * {
+            margin-top: 0.25rem;
+        }
+        
+        .space-y-3 > * + * {
+            margin-top: 0.75rem;
+        }
+        
+        .space-y-4 > * + * {
+            margin-top: 1rem;
+        }
+        
+        .px-3 {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+        
+        .px-4 {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        .px-6 {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+        
+        .py-1 {
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+        
+        .py-2 {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        
+        .py-3 {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+        
+        .py-8 {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        
+        .border {
+            border-width: 1px;
+        }
+        
+        .border-2 {
+            border-width: 2px;
+        }
+        
+        .border-dashed {
+            border-style: dashed;
+        }
+        
+        .border-gray-200 {
+            border-color: rgb(229, 231, 235);
+        }
+        
+        .border-gray-300 {
+            border-color: rgb(209, 213, 219);
+        }
+        
+        .border-blue-200 {
+            border-color: rgb(191, 219, 254);
+        }
+        
+        .border-red-200 {
+            border-color: rgb(254, 202, 202);
+        }
+        
+        .rounded {
+            border-radius: 0.25rem;
+        }
+        
+        .rounded-lg {
+            border-radius: 0.5rem;
+        }
+        
+        .rounded-full {
+            border-radius: 9999px;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .uppercase {
+            text-transform: uppercase;
+        }
+        
+        .w-12 {
+            width: 3rem;
+        }
+        
+        .w-16 {
+            width: 4rem;
+        }
+        
+        .w-full {
+            width: 100%;
+        }
+        
+        .h-12 {
+            height: 3rem;
+        }
+        
+        .h-16 {
+            height: 4rem;
+        }
+        
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .block {
+            display: block;
+        }
+        
+        button {
+            cursor: pointer;
+            border: none;
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        .hover\:bg-indigo-700:hover {
+            background-color: rgb(67, 56, 202);
+        }
+        
+        .hover\:bg-red-600:hover {
+            background-color: rgb(220, 38, 38);
+        }
+        
+        .hover\:bg-gray-300:hover {
+            background-color: rgb(209, 213, 219);
+        }
+        
+        .hover\:bg-gray-600:hover {
+            background-color: rgb(75, 85, 99);
+        }
+        
+        .hover\:border-indigo-500:hover {
+            border-color: rgb(99, 102, 241);
+        }
+        
+        .hover\:shadow-md:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .transition-colors {
+            transition-property: background-color, border-color, color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        
+        .transition-shadow {
+            transition-property: box-shadow;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        
+        input:focus {
+            outline: none;
+        }
+        
+        .focus\:outline-none:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+        }
+        
+        .focus\:ring-2:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5);
+        }
+        
+        .focus\:ring-indigo-500:focus {
+            --tw-ring-color: rgb(99, 102, 241);
+        }
+        
+        .fixed {
+            position: fixed;
+        }
+        
+        .inset-0 {
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+        
+        .z-50 {
+            z-index: 50;
+        }
+        
+        .mx-4 {
+            margin-left: 1rem;
+            margin-right: 1rem;
+        }
+        
+        .max-w-md {
+            max-width: 28rem;
+        }
+        
+        .list-decimal {
+            list-style-type: decimal;
+        }
+        
+        .list-inside {
+            list-style-position: inside;
+        }
+        
+        svg {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function ConsultaCredenciales() {
+          const [datos, setDatos] = useState([]);
+          const [busqueda, setBusqueda] = useState('');
+          const [resultado, setResultado] = useState(null);
+          const [cargando, setCargando] = useState(true);
+          const [autenticado, setAutenticado] = useState(false);
+          const [modalAbierto, setModalAbierto] = useState(false);
+          const [passwordInput, setPasswordInput] = useState('');
+          const [errorPassword, setErrorPassword] = useState('');
+
+          // Cargar datos guardados al iniciar
+          useEffect(() => {
+            cargarDatosGuardados();
+          }, []);
+
+          const cargarDatosGuardados = async () => {
+            try {
+              const datosGuardados = localStorage.getItem('credenciales-db');
+              if (datosGuardados) {
+                setDatos(JSON.parse(datosGuardados));
+              }
+            } catch (error) {
+              console.log('No hay datos guardados previamente');
+            } finally {
+              setCargando(false);
+            }
+          };
+
+          const manejarArchivoExcel = async (e) => {
+            const archivo = e.target.files[0];
+            if (!archivo) return;
+
+            const reader = new FileReader();
+            reader.onload = async (evento) => {
+              try {
+                const data = new Uint8Array(evento.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const primerHoja = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(primerHoja);
+
+                // Normalizar los datos
+                const datosNormalizados = jsonData.map(fila => ({
+                  nombre: fila.nombre || fila.Nombre || fila.NOMBRE || fila.name || fila.Name || '',
+                  usuario: fila.usuario || fila.Usuario || fila.USUARIO || fila.user || fila.User || '',
+                  contraseña: fila.contraseña || fila.Contraseña || fila.CONTRASEÑA || fila.password || fila.Password || fila.PASSWORD || fila.clave || fila.Clave || ''
+                }));
+
+                setDatos(datosNormalizados);
+                localStorage.setItem('credenciales-db', JSON.stringify(datosNormalizados));
+                
+                alert(`✅ Archivo cargado exitosamente. ${datosNormalizados.length} registros importados.`);
+              } catch (error) {
+                alert('❌ Error al procesar el archivo: ' + error.message);
+              }
+            };
+            reader.readAsArrayBuffer(archivo);
+          };
+
+          const buscarCredenciales = () => {
+            if (!busqueda.trim()) {
+              setResultado(null);
+              return;
+            }
+
+            const encontrados = datos.filter(item => {
+              const nombreMatch = item.nombre && item.nombre.toLowerCase().includes(busqueda.toLowerCase());
+              const usuarioMatch = item.usuario && item.usuario.toLowerCase().includes(busqueda.toLowerCase());
+              
+              return nombreMatch || usuarioMatch;
+            });
+
+            if (encontrados.length > 0) {
+              setResultado(encontrados);
+            } else {
+              setResultado([]);
+            }
+          };
+
+          useEffect(() => {
+            if (datos.length > 0) {
+              buscarCredenciales();
+            }
+          }, [busqueda, datos]);
+
+          const limpiarDatos = async () => {
+            if (confirm('¿Estás seguro de que deseas eliminar todos los datos?')) {
+              try {
+                localStorage.removeItem('credenciales-db');
+                setDatos([]);
+                setResultado(null);
+                setBusqueda('');
+                alert('✅ Datos eliminados correctamente');
+              } catch (error) {
+                alert('❌ Error al eliminar datos');
+              }
+            }
+          };
+
+          const verificarPassword = () => {
+            const passwordCorrecta = 'E.r40%6205$C';
+            
+            if (passwordInput === passwordCorrecta) {
+              setAutenticado(true);
+              setModalAbierto(false);
+              setPasswordInput('');
+              setErrorPassword('');
+            } else {
+              setErrorPassword('❌ Contraseña incorrecta');
+              setPasswordInput('');
+            }
+          };
+
+          const cerrarSesion = () => {
+            setAutenticado(false);
+            setPasswordInput('');
+            setErrorPassword('');
+          };
+
+          if (cargando) {
+            return (
+              <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                <div className="text-xl text-gray-600">Cargando...</div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+              <div className="max-w-4xl mx-auto">
+                <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                    🔍 Sistema de Consulta de Credenciales
+                  </h1>
+                  <p className="text-gray-600">
+                    Sube tu archivo Excel y consulta credenciales por nombre
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-700">
+                      📁 Cargar Base de Datos
+                    </h2>
+                    {autenticado && (
+                      <button
+                        onClick={cerrarSesion}
+                        className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+                      >
+                        🔒 Bloquear
+                      </button>
+                    )}
+                  </div>
+                  
+                  {!autenticado ? (
+                    <div className="text-center py-8">
+                      <div className="mb-4">
+                        <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <p className="text-gray-600 mb-6">Sección protegida - Se requiere autenticación</p>
+                      </div>
+                      <button
+                        onClick={() => setModalAbierto(true)}
+                        className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors shadow-md"
+                      >
+                        🔓 Desbloquear para subir archivo
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors">
+                        <input
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={manejarArchivoExcel}
+                          className="hidden"
+                          id="file-upload"
+                        />
+                        <label
+                          htmlFor="file-upload"
+                          className="cursor-pointer flex flex-col items-center"
+                        >
+                          <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                          <span className="text-sm text-gray-600">
+                            Click para seleccionar archivo Excel
+                          </span>
+                          <span className="text-xs text-gray-400 mt-1">
+                            Columnas: nombre, usuario, contraseña
+                          </span>
+                        </label>
+                      </div>
+                      {datos.length > 0 && (
+                        <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
+                          <span className="text-green-700 font-medium">
+                            ✅ Base de datos cargada: {datos.length} registros
+                          </span>
+                          <button
+                            onClick={limpiarDatos}
+                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                          >
+                            Limpiar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {datos.length > 0 && (
+                  <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl font-semibold text-gray-700">
+                        🔎 Buscar Credenciales
+                      </h2>
+                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                        {datos.length} usuario{datos.length !== 1 ? 's' : ''} cargado{datos.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                        placeholder="Busca por nombre o usuario..."
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base"
+                      />
+                      {busqueda && (
+                        <button
+                          onClick={() => {
+                            setBusqueda('');
+                            setResultado(null);
+                          }}
+                          className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-medium transition-colors"
+                        >
+                          Limpiar
+                        </button>
+                      )}
+                    </div>
+                    {busqueda && resultado && resultado.length > 0 && (
+                      <p className="text-sm text-green-600 mt-2 font-medium">
+                        ✓ {resultado.length} resultado{resultado.length !== 1 ? 's' : ''} encontrado{resultado.length !== 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {resultado && (
+                  <div className="bg-white rounded-lg shadow-lg p-6">
+                    <h2 className="text-xl font-semibold text-gray-700 mb-4">
+                      📋 Resultados ({resultado.length})
+                    </h2>
+                    {resultado.length === 0 ? (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+                        ❌ No se encontró ningún registro que coincida con "{busqueda}"
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {resultado.map((item, index) => (
+                          <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div className="space-y-3">
+                              <div className="bg-indigo-50 p-3 rounded-lg">
+                                <label className="text-xs text-indigo-600 font-medium uppercase">Nombre</label>
+                                <p className="text-lg text-gray-800 font-semibold">{item.nombre}</p>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded-lg">
+                                <label className="text-xs text-gray-500 font-medium uppercase">Usuario</label>
+                                <p className="text-base text-gray-800">{item.usuario}</p>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded-lg">
+                                <label className="text-xs text-gray-500 font-medium uppercase">Contraseña</label>
+                                <p className="text-base text-gray-800 font-mono">{item.contraseña}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {datos.length === 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <h3 className="font-semibold text-blue-800 mb-2">ℹ️ Instrucciones</h3>
+                    <ol className="list-decimal list-inside space-y-1 text-blue-700 text-sm">
+                      <li>Presiona el botón "Desbloquear" e ingresa la contraseña</li>
+                      <li>Prepara tu archivo Excel con 3 columnas: <strong>nombre</strong>, <strong>usuario</strong>, <strong>contraseña</strong></li>
+                      <li>Click en el área de carga para seleccionar tu archivo</li>
+                      <li>Una vez cargado, usa el buscador para consultar por nombre</li>
+                      <li>Los datos se guardan automáticamente y persisten entre sesiones</li>
+                    </ol>
+                  </div>
+                )}
+
+                {modalAbierto && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setModalAbierto(false)}>
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                      <div className="text-center mb-6">
+                        <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-16 h-16 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Autenticación Requerida</h3>
+                        <p className="text-gray-600">Ingresa la contraseña para acceder</p>
+                      </div>
+
+                      <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Contraseña
+                        </label>
+                        <input
+                          type="password"
+                          value={passwordInput}
+                          onChange={(e) => {
+                            setPasswordInput(e.target.value);
+                            setErrorPassword('');
+                          }}
+                          onKeyPress={(e) => e.key === 'Enter' && verificarPassword()}
+                          placeholder="Ingresa la contraseña"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          autoFocus
+                        />
+                        {errorPassword && (
+                          <p className="text-red-600 text-sm mt-2">{errorPassword}</p>
+                        )}
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            setModalAbierto(false);
+                            setPasswordInput('');
+                            setErrorPassword('');
+                          }}
+                          className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={verificarPassword}
+                          className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+                        >
+                          Desbloquear
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        ReactDOM.render(<ConsultaCredenciales />, document.getElementById('root'));
+    </script>
+</body>
+</html>
